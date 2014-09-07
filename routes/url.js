@@ -4,14 +4,14 @@ var router  = express.Router();
 var request = require('request');
 var cheerio = require('cheerio');
 var zlib    = require('zlib');
-var msg     = "swag";
+var msg     = "";
 
 zlib.gzip(msg, function(err, result) {
   if(err) {
     console.log('ERROR\t'+err);
   } else {
-    console.log('Message\t'+msg); 
-    console.log('Result\t'+result);
+    //console.log('Message\t'+msg); 
+    //console.log('Result\t'+result);
     msg = result.toString('ascii');
   }
 
@@ -53,7 +53,7 @@ router.get('/', function(req, res) {
 
 router.post('/sms', function(req, res) {
   var resp = new twilio.TwimlResponse();
-  var tURL = req.param("url");
+  var tURL = req.body.Body;
 
   request('http://facebook.com', function (error, response, body) {
     var $ = cheerio.load(body);
