@@ -29,11 +29,13 @@ router.post('/sms', function(req, res) {
   res.send(resp.toString());
 });
 
-zlib.gzip(msg, function(err, result){
+var string = "asdfhyrt";
+
+zlib.gzip(string, function(err, result){
   if(err) 
     console.log('ERROR\t'+err);
   else{
-    console.log'Message\t'+(msg); 
+    console.log('Message\t'+string); 
     console.log('Result\t'+result);
   }
 });
