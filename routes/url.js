@@ -6,23 +6,6 @@ var cheerio = require('cheerio');
 var zlib    = require('zlib');
 var msg     = "";
 
-zlib.gzip(msg, function(err, result) {
-  if(err) {
-    console.log('ERROR\t'+err);
-  } else {
-    //console.log('Message\t'+msg); 
-    //console.log('Result\t'+result);
-    msg = result.toString('ascii');
-  }
-
-  var str = "";
-  for (var i=0;i<msg.length;i++) {
-    str += unicodeToBinary(msg.charAt(i));
-  }
-
-  console.log("Decoded: " + str);
-});
-
 var UTF_BITS = 8;
 
 function padLeftTo(string, padChar, numChars) {
