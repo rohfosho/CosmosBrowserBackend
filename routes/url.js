@@ -4,7 +4,47 @@ var router  = express.Router();
 var request = require('request');
 var cheerio = require('cheerio');
 var zlib    = require('zlib');
-var msg     = '';
+var msg     = "swag";
+
+zlib.gzip(msg, function(err, result) {
+  if(err) {
+    console.log('ERROR\t'+err);
+  } else {
+    console.log('Message\t'+msg); 
+    console.log('Result\t'+result);
+    msg = result.toString('ascii');
+  }
+
+  var str = "";
+  for (var i=0;i<msg.length;i++) {
+    str += unicodeToBinary(msg.charAt(i));
+  }
+
+  console.log("Decoded: " + str);
+});
+
+var UTF_BITS = 8;
+
+function padLeftTo(string, padChar, numChars) {
+    return (new Array(numChars-string.length+1)).join(padChar) + string;
+}
+
+function unicodeToBinary(char) {
+    return char.split('').map(function(codepoint) {
+        return padLeftTo(codepoint.charCodeAt(0).toString(2), 0, UTF_BITS);
+    }).join('');
+    //         ^^^^( ignore this part if you just want a string )^^^^
+}
+
+function binaryToUnicode(binaryList) {
+    var codepointsAsNumbers = [];
+    while( binaryList.length>0 ){
+        var codepointBits = binaryList.slice(0,UTF_BITS);
+        binaryList = binaryList.slice(UTF_BITS);
+        codepointsAsNumbers.push( parseInt(codepointBits.join(''),2) );
+    }
+    return String.fromCharCode.apply(this,codepointsAsNumbers);
+}
 
 /* GET users listing. */
 router.get('/', function(req, res) {
