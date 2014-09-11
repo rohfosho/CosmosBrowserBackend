@@ -1,43 +1,75 @@
-var express = require('express');
-var twilio  = require('twilio');
-var router  = express.Router();
-var request = require('request');
-var cheerio = require('cheerio');
-var zlib    = require('zlib');
-var msg     = "";
+//I just spotted some minor things that could be cleaned up code-wise
+//I don't have the time to write tests for this today, so code may be non-functional
 
-var UTF_BITS = 8;
+var express = require('express'),
+    twilio  = require('twilio'),
+    router  = express.Router(),
+    request = require('request'),
+    cheerio = require('cheerio'),
+    zlib    = require('zlib');
 
 function padLeftTo(string, padChar, numChars) {
-    return (new Array(numChars-string.length+1)).join(padChar) + string;
+    'use strict';
+    var padded = (new Array(numChars-string.length+1)).join(padChar) + string;
+    return padded
 }
 
 function unicodeToBinary(char) {
-    return char.split('').map(function(codepoint) {
-        return padLeftTo(codepoint.charCodeAt(0).toString(2), 0, UTF_BITS);
-    }).join('');
+    'use strict';
+    var UTF_BITS = 8,
+        binary = char.split('').map(function(codepoint) {
+                return padLeftTo(codepoint.charCodeAt(0).toString(2), 0, UTF_BITS);
+            }).join('');
+    return binary;
     //         ^^^^( ignore this part if you just want a string )^^^^
 }
 
 function binaryToUnicode(binaryList) {
-    var codepointsAsNumbers = [];
+    'use strict';
+    var codepointsAsNumbers = [],
+        codepointBits,
+        UTF_BITS = 8,
+        unicode;
     while( binaryList.length>0 ){
-        var codepointBits = binaryList.slice(0,UTF_BITS);
+        codepointBits = binaryList.slice(0,UTF_BITS);
         binaryList = binaryList.slice(UTF_BITS);
         codepointsAsNumbers.push( parseInt(codepointBits.join(''),2) );
     }
-    return String.fromCharCode.apply(this,codepointsAsNumbers);
+    
+    unicode = String.fromCharCode.apply(this,codepointsAsNumbers);
+    
+    return unicode;
 }
 
 /* GET users listing. */
 router.get('/', function(req, res) {
+    'use strict';
   res.send('lolzard');
 });
 
 router.post('/sms', function(req, res) {
-  var resp = new twilio.TwimlResponse();
-  var tURL = req.body.Body;
-  console.log(tURL);
+  'use strict';
+  var resp = new twilio.TwimlResponse(),
+      tURL = req.body.Body,
+      msg = '';
+      //msg was previously defined as a global. Not a good idea to have functions depend on
+      //globals, so I put it in here. As far as I can see, this is the only function that needs
+      //access to it. Strict mode also enforces that a function may never access a global
+      //so if it gets put as a global, this script will throw an error because of security.
+    
+    function sendIt(temp, resp, sendItRes){
+      var messages = new Array, slices = Math.ceil(temp.length/1594);
+      
+      for(var i=0;i<slices;i++){
+        messages.push(i+' '+temp.substring(i*1594,(i*1594+1594)));
+      }
+    
+      for(var j=0;j<messages.length;j++){
+        resp.message(messages[j]);
+      }
+    
+      res.sendItRes(resp.toString());
+    }
 
   request(tURL, function (error, response, body) {
     var $ = cheerio.load(body);
@@ -54,37 +86,16 @@ router.post('/sms', function(req, res) {
     msg = $('body').html()+'';
 
     zlib.gzip(msg, function(err, result) {
+      var messageToSend = new Buffer(msg).toString('base64');
+      
       if(err) {
-        console.log('ERROR\t'+err);
-      } else {
-        //console.log('Message\t'+msg); 
-        //console.log('Result\t'+result);
-        var temp = new Buffer(msg).toString('base64');
-        console.log(temp);
-        msg = temp;
-        sendIt(msg, resp, res);
+        throw err;
       }
+      sendIt(messageToSend, resp, res);
+     }
     });
   });
-
 });
 
-function sendIt(temp, resp, res){
-  var messages = new Array, slices = Math.ceil(temp.length/1594);
-  console.log('\n'+slices);
-  
-  for(var i=0;i<slices;i++){
-    console.log(temp.substring(i*1600,(i*1594+1594))+'\n');
-    messages.push(i+' '+temp.substring(i*1594,(i*1594+1594)));
-  }
-
-  console.log(messages.length);
-
-  for(var j=0;j<messages.length;j++){
-    resp.message(messages[j]);
-  }
-
-  res.send(resp.toString());
-}
 
 module.exports = router;
