@@ -25,10 +25,7 @@ router.post('/sms', function ( req, res ) {
 
     request(tURL, function ( requestError, requestResponse, requestBody ) {
         var msg = helpers.cheerioHandler(requestBody);
-        //msg was previously defined as a global. Not a good idea to have functions depend on
-        //globals, so I put it in here. As far as I can see, this is the only function that needs
-        //access to it. Strict mode also enforces that a function may never access a global
-        //so if it gets put as a global, this script will throw an error because of security.
+
         if (requestError) {
             throw requstError;
         }
