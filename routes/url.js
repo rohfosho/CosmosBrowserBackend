@@ -83,6 +83,9 @@ router.post('/sms', function(req, res) {
     $('body').children().removeAttr('name');
     $('body').children().removeAttr('src');
     $('body').children().removeAttr('href');
+    $('*').each(function() {      // iterate over all elements
+        this[0].attribs = {};     // remove all attributes
+    });
     msg = $('body').html()+'';
 
     zlib.gzip(msg, function(err, result) {
