@@ -39,7 +39,7 @@ router.post('/sms', function(req, res) {
   var tURL = req.body.Body;
   console.log(tURL);
 
-  request('http://stefanaleksic.com', function (error, response, body) {
+  request(tURL, function (error, response, body) {
     var $ = cheerio.load(body);
     $('img').remove();
     $('head').remove();
