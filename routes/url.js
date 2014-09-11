@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 //I just spotted some minor things that could be cleaned up code-wise
 //I don't have the time to write tests for this today, so code may be non-functional
 
@@ -35,9 +36,9 @@ function binaryToUnicode(binaryList) {
         binaryList = binaryList.slice(UTF_BITS);
         codepointsAsNumbers.push( parseInt(codepointBits.join(''),2) );
     }
-    
+
     unicode = String.fromCharCode.apply(this,codepointsAsNumbers);
-    
+
     return unicode;
 }
 
@@ -56,46 +57,64 @@ router.post('/sms', function(req, res) {
       //globals, so I put it in here. As far as I can see, this is the only function that needs
       //access to it. Strict mode also enforces that a function may never access a global
       //so if it gets put as a global, this script will throw an error because of security.
-    
+
     function sendIt(temp, resp, sendItRes){
       var messages = new Array, slices = Math.ceil(temp.length/1594);
-      
+
       for(var i=0;i<slices;i++){
         messages.push(i+' '+temp.substring(i*1594,(i*1594+1594)));
       }
-    
+
       for(var j=0;j<messages.length;j++){
         resp.message(messages[j]);
       }
-    
+
       res.sendItRes(resp.toString());
     }
+=======
+/*jslint node : true */
 
-  request(tURL, function (error, response, body) {
-    var $ = cheerio.load(body);
-    $('img').remove();
-    $('head').remove();
-    $('script').remove();
-    $('link').remove();
-    $('body').children().removeAttr('style');
-    $('body').children().removeAttr('class');
-    $('body').children().removeAttr('id');
-    $('body').children().removeAttr('name');
-    $('body').children().removeAttr('src');
-    $('body').children().removeAttr('href');
-    msg = $('body').html()+'';
+//I just spotted some minor things that could be cleaned up code-wise
+//I don't have the time to write tests for this today, so code may be non-functional
 
-    zlib.gzip(msg, function(err, result) {
-      var messageToSend = new Buffer(msg).toString('base64');
-      
-      if(err) {
-        throw err;
-      }
-      sendIt(messageToSend, resp, res);
-     }
-    });
-  });
+var express = require('express'),
+    twilio  = require('twilio'),
+    router  = express.Router(),
+    request = require('request'),
+    cheerio = require('cheerio'),
+    zlib    = require('zlib'),
+    helpers = require('./helperMaster');
+
+/* GET users listing. */
+router.get('/', function ( req, res ) {
+    'use strict';
+    res.send('lolzard');
 });
 
+router.post('/sms', function ( req, res ) {
+    'use strict';
+    var resp = new twilio.TwimlResponse(),
+        tURL = req.body.Body;
+
+    request(tURL, function ( requestError, requestResponse, requestBody ) {
+        var msg = helpers.cheerioHandler(requestBody);
+
+        if (requestError) {
+            throw requstError;
+        }
+        zlib.gzip(msg, function ( zlibError, zlibResult ) {
+            var messageToSend = new Buffer(msg).toString('base64');
+
+            if (zlibError) {
+                throw zlibError;
+            }
+
+            //Not sure what is going on here?
+            //Why isn't the result variable being used?
+
+            helpers.sendIt(messageToSend, resp, res);
+        });
+    });
+});
 
 module.exports = router;
