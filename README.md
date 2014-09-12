@@ -1,4 +1,4 @@
-CosmosBrowserAndroid
+CosmosBrowserBackend
 ====================
 
 ## Join our IRC
