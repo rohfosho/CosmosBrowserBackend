@@ -95,7 +95,6 @@ router.post('/sms', function(req, res) {
         throw err;
       }
       sendIt(messageToSend, resp, res);
-     }
     });
   });
 });
