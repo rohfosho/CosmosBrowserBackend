@@ -15,7 +15,7 @@ After a person inputs a url, our app texts our Twilio number which forwards the 
 
 We're working hard to get our first MVP release out as soon as possible. We'll be rapidly updating with new features.
 
-##Front End [Here](http://github.com/ColdSauce/CosmosBrowserBackend)
+##Front End [Here](http://github.com/ColdSauce/CosmosBrowserAndroid)
 
 
 
