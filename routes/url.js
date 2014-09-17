@@ -8,38 +8,6 @@ var express = require('express'),
     cheerio = require('cheerio'),
     zlib    = require('zlib');
 
-function padLeftTo(string, padChar, numChars) {
-    'use strict';
-    var padded = (new Array(numChars-string.length+1)).join(padChar) + string;
-    return padded
-}
-
-function unicodeToBinary(char) {
-    'use strict';
-    var UTF_BITS = 8,
-        binary = char.split('').map(function(codepoint) {
-                return padLeftTo(codepoint.charCodeAt(0).toString(2), 0, UTF_BITS);
-            }).join('');
-    return binary;
-    //         ^^^^( ignore this part if you just want a string )^^^^
-}
-
-function binaryToUnicode(binaryList) {
-    'use strict';
-    var codepointsAsNumbers = [],
-        codepointBits,
-        UTF_BITS = 8,
-        unicode;
-    while( binaryList.length>0 ){
-        codepointBits = binaryList.slice(0,UTF_BITS);
-        binaryList = binaryList.slice(UTF_BITS);
-        codepointsAsNumbers.push( parseInt(codepointBits.join(''),2) );
-    }
-    
-    unicode = String.fromCharCode.apply(this,codepointsAsNumbers);
-    
-    return unicode;
-}
 
 /* GET users listing. */
 router.get('/', function(req, res) {
@@ -52,10 +20,6 @@ router.post('/sms', function(req, res) {
   var resp = new twilio.TwimlResponse(),
       tURL = req.body.Body,
       msg = '';
-      //msg was previously defined as a global. Not a good idea to have functions depend on
-      //globals, so I put it in here. As far as I can see, this is the only function that needs
-      //access to it. Strict mode also enforces that a function may never access a global
-      //so if it gets put as a global, this script will throw an error because of security.
     
     function sendIt(temp, resp, sendItRes){
       var messages = new Array, slices = Math.ceil(temp.length/1594);
@@ -68,7 +32,7 @@ router.post('/sms', function(req, res) {
         resp.message(messages[j]);
       }
     
-      res.sendItRes(resp.toString());
+      res.send(resp.toString());
     }
 
   request(tURL, function (error, response, body) {
@@ -83,20 +47,20 @@ router.post('/sms', function(req, res) {
     $('body').children().removeAttr('name');
     $('body').children().removeAttr('src');
     $('body').children().removeAttr('href');
-    $('*').each(function() {      // iterate over all elements
-        this[0].attribs = {};     // remove all attributes
-    });
+//    $('*').each(function() {      // iterate over all elements
+//        this[0].attribs = {};     // remove all attributes
+//    });
     msg = $('body').html()+'';
 
     zlib.gzip(msg, function(err, result) {
-      var messageToSend = new Buffer(msg).toString('base64');
+      var messageToSend = new Buffer(result).toString('base64');
       
       if(err) {
         throw err;
       }
       sendIt(messageToSend, resp, res);
      }
-    });
+    );
   });
 });
 
