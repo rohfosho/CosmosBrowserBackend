@@ -19,7 +19,7 @@
 10 error There is likely additional logging output above.
 11 error System Darwin 14.0.0
 12 error command "node" "/usr/local/bin/npm" "start"
-13 error cwd /Users/rohith/workspace/Hackathons/CosmosBrowser
+13 error cwd /Users/rohith/workspace/CosmosBackend
 14 error node -v v0.10.29
 15 error npm -v 1.4.14
 16 error code ELIFECYCLE
