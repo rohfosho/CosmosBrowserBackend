@@ -16,11 +16,6 @@ router.get('/', function (req, res) {
   res.send('lolzard');
 });
 
-router.get('/sms', function (req, res){
-    'use strict';
-    res.send('nope');
-});
-
 router.post('/sms', function (expressSMSReq, expressSMSRes) {
   'use strict';
   var twillioResponse = new twilio.TwimlResponse(),
@@ -34,7 +29,7 @@ router.post('/sms', function (expressSMSReq, expressSMSRes) {
 
     helpers.cheerioHandler(requestBody, function (cheerioErr, message) {
       var markedDown = '';
-      console.log('cheerio')
+      console.log('cheerio');
 
       if (cheerioErr) {
         throw cheerioErr;
