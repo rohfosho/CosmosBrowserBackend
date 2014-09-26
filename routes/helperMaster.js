@@ -2,7 +2,7 @@
 
 var cheerio = require('cheerio');
 
-var helperMaster = function () {
+var HelperMaster = function () {
   'use strict';
   this.cheerioHandler = function (body, callback) {
     try {
@@ -53,3 +53,5 @@ var helperMaster = function () {
     }
   };
 };
+
+module.exports = new HelperMaster();
