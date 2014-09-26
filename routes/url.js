@@ -1,80 +1,70 @@
 var express = require('express'),
-    twilio  = require('twilio'),
-    router  = express.Router(),
-    request = require('request'),
-    cheerio = require('cheerio'),
-    zlib    = require('zlib'),
-    snappy  = require('snappy'),
-    minify  = require('html-minifier').minify,
-    md      = require('html-md');
+  twilio  = require('twilio'),
+  router  = express.Router(),
+  request = require('request'),
+  cheerio = require('cheerio'),
+  zlib    = require('zlib'),
+  snappy  = require('snappy'),
+  minify  = require('html-minifier').minify,
+  md      = require('html-md'),
+  helpers = require('./helperMaster');
 
 
 /* GET users listing. */
-router.get('/', function(req, res) {
+router.get('/', function (req, res) {
   'use strict';
   res.send('lolzard');
 });
 
-router.post('/sms', function(req, res) {
+router.get('/sms', function (req, res){
+    'use strict';
+    res.send('nope');
+});
+
+router.post('/sms', function (expressSMSReq, expressSMSRes) {
   'use strict';
-  var resp = new twilio.TwimlResponse(),
-  tURL = req.body.Body,
-  msg = '';
+  var twillioResponse = new twilio.TwimlResponse(),
+    twillioURL = expressSMSReq.body.Body;
 
-console.log(tURL);
+  request(twillioURL, function (requestError, requestResponse, requestBody) {
+    if (requestError) {
+      throw requestError;
+    }
+    console.log('request');
 
-request(tURL, function (error, response, body) {
-  var $ = cheerio.load(body);
-  $('img').remove();
-  $('head').remove();
-  $('script').remove();
-  $('link').remove();
-  $('body').children().removeAttr('style');
-  $('body').children().removeAttr('class');
-  $('body').children().removeAttr('id');
-  $('body').children().removeAttr('name');
-  $('body').children().removeAttr('src');
-  $('body').children().removeAttr('href');
-  $('body').children().removeAttr('*');
+    helpers.cheerioHandler(requestBody, function (cheerioErr, message) {
+      var markedDown = '';
+      console.log('cheerio')
 
-  msg = $('body').html();
+      if (cheerioErr) {
+        throw cheerioErr;
+      }
+      //Note that we are reassigning the parameter message sent to cheerioHandler
+      message = '<html><body>' + message + '</body></html>';
+      message = minify(message, {collapseWhitespace: true, removeComments: true});
+      markedDown = md(message);
 
-  msg = '<html><body>'+msg+'</body></html>';
-  msg = minify(msg, {collapseWhitespace:true, removeComments: true});
+      zlib.gzip(markedDown, function (zlibErr, zlibResult) {
+        var messageToSend = '';
+        console.log('zlib');
+        if (zlibErr) {
+          throw zlibErr;
+        }
 
-  var lol = md(msg); 
+        messageToSend = new Buffer(zlibResult).toString('base64');
 
+        console.log("\n-------------MARKDOWN---------\n" + messageToSend);
+        //console.log("\n-------------HTML---------\n"+messageToSend);
 
-  zlib.gzip(lol, function(err, result) {
-    var messageToSend = new Buffer(result).toString('base64');
-
-    console.log("\n-------------MARKDOWN---------\n"+messageToSend);
-    //console.log("\n-------------HTML---------\n"+messageToSend);
-
-    if(err) {throw err;}
-    sendIt(messageToSend, resp, res);
-  }); 
+        helpers.sendIt(messageToSend, twillioResponse, expressSMSRes, function (sendItError, processedMessages) {
+          if (sendItError) {
+            throw sendItError;
+          }
+          console.log('send');
+          expressSMSRes.send(processedMessages);
+        });
+      });
+    });
+  });
 });
-
-function sendIt(temp, resp, sendItRes){
-  var messages = new Array, slices = Math.ceil(temp.length/160);
-
-  console.log("Slices:\t"+slices);
-
-  for(var i=0;i<slices;i++){
-    if(i == slices - 1)
-      messages.push(i+'%'+temp.substring(i*158,(i*158+158))+'%');
-    else
-      messages.push(i+'%'+temp.substring(i*159,(i*159+159)));
-  }
-
-  for(var j=0;j<messages.length;j++){
-    resp.message(messages[j]);
-  }
-
-  res.send(resp.toString());
-}
-});
-
-
 module.exports = router;
