@@ -56,7 +56,7 @@ router.post('/sms', function (expressSMSReq, expressSMSRes) {
             throw sendItError;
           }
           console.log('send');
-          expressSMSRes.send(processedMessages);
+          expressSMSRes.send(processedMessages.toString());
         });
       });
     });
