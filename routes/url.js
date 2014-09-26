@@ -4,6 +4,7 @@ var express = require('express'),
     request = require('request'),
     cheerio = require('cheerio'),
     zlib    = require('zlib'),
+    snappy  = require('snappy'),
     minify  = require('html-minifier').minify,
     md      = require('html-md');
 
@@ -34,30 +35,30 @@ request(tURL, function (error, response, body) {
   $('body').children().removeAttr('name');
   $('body').children().removeAttr('src');
   $('body').children().removeAttr('href');
-  //    $('*').each(function() {      // iterate over all elements
-  //        this[0].attribs = {};     // remove all attributes
-  //    });
+  $('body').children().removeAttr('*');
+
   msg = $('body').html();
-  var lol = md(msg); 
 
   msg = '<html><body>'+msg+'</body></html>';
   msg = minify(msg, {collapseWhitespace:true, removeComments: true});
-  console.log(msg);
-  zlib.gzip(msg, function(err, result) {
-    var messageToSend = new Buffer(msg).toString('base64');
-    console.log(messageToSend);
 
-    if(err) {
-      throw err;
-    }
-    //console.log(messageToSend);
+  var lol = md(msg); 
+
+
+  zlib.gzip(lol, function(err, result) {
+    var messageToSend = new Buffer(result).toString('base64');
+
+    console.log("\n-------------MARKDOWN---------\n"+messageToSend);
+    //console.log("\n-------------HTML---------\n"+messageToSend);
+
+    if(err) {throw err;}
     sendIt(messageToSend, resp, res);
-  });
+  }); 
 });
 
 function sendIt(temp, resp, sendItRes){
   var messages = new Array, slices = Math.ceil(temp.length/160);
-  
+
   console.log("Slices:\t"+slices);
 
   for(var i=0;i<slices;i++){

@@ -17,6 +17,7 @@
     "request": "^2.42.0",
     "static-favicon": "~1.0.0",
     "twilio": "^1.7.0",
+    "compressjs": "*",
     "html-minifier": "*",
     "html-md": "*"
   }
