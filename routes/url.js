@@ -1,103 +1,72 @@
-//I just spotted some minor things that could be cleaned up code-wise
-//I don't have the time to write tests for this today, so code may be non-functional
-
 var express = require('express'),
     twilio  = require('twilio'),
     router  = express.Router(),
     request = require('request'),
     cheerio = require('cheerio'),
-    zlib    = require('zlib');
+    zlib    = require('zlib'),
+    snappy  = require('snappy'),
+    minify  = require('html-minifier').minify,
+    md      = require('html-md'),
+    helpers = require('./helperMaster');
 
-function padLeftTo(string, padChar, numChars) {
-    'use strict';
-    var padded = (new Array(numChars-string.length+1)).join(padChar) + string;
-    return padded
-}
-
-function unicodeToBinary(char) {
-    'use strict';
-    var UTF_BITS = 8,
-        binary = char.split('').map(function(codepoint) {
-                return padLeftTo(codepoint.charCodeAt(0).toString(2), 0, UTF_BITS);
-            }).join('');
-    return binary;
-    //         ^^^^( ignore this part if you just want a string )^^^^
-}
-
-function binaryToUnicode(binaryList) {
-    'use strict';
-    var codepointsAsNumbers = [],
-        codepointBits,
-        UTF_BITS = 8,
-        unicode;
-    while( binaryList.length>0 ){
-        codepointBits = binaryList.slice(0,UTF_BITS);
-        binaryList = binaryList.slice(UTF_BITS);
-        codepointsAsNumbers.push( parseInt(codepointBits.join(''),2) );
-    }
-    
-    unicode = String.fromCharCode.apply(this,codepointsAsNumbers);
-    
-    return unicode;
-}
 
 /* GET users listing. */
-router.get('/', function(req, res) {
-    'use strict';
+router.get('/', function (req, res) {
+  'use strict';
   res.send('lolzard');
 });
 
-router.post('/sms', function(req, res) {
+router.post('/sms', function (expressSMSReq, expressSMSRes) {
   'use strict';
-  var resp = new twilio.TwimlResponse(),
-      tURL = req.body.Body,
-      msg = '';
-      //msg was previously defined as a global. Not a good idea to have functions depend on
-      //globals, so I put it in here. As far as I can see, this is the only function that needs
-      //access to it. Strict mode also enforces that a function may never access a global
-      //so if it gets put as a global, this script will throw an error because of security.
-    
-    function sendIt(temp, resp, sendItRes){
-      var messages = new Array, slices = Math.ceil(temp.length/1594);
-      
-      for(var i=0;i<slices;i++){
-        messages.push(i+' '+temp.substring(i*1594,(i*1594+1594)));
+  var twillioResponse = new twilio.TwimlResponse(),
+  twillioURL = expressSMSReq.body.Body;
+console.log(twillioURL);
+try{
+  setTimeout(function(){
+    request(twillioURL, function (requestError, requestResponse, requestBody) {
+      if (requestError) {
+        throw requestError;
       }
-    
-      for(var j=0;j<messages.length;j++){
-        resp.message(messages[j]);
-      }
-    
-      res.sendItRes(resp.toString());
-    }
+      console.log('request');
 
-  request(tURL, function (error, response, body) {
-    var $ = cheerio.load(body);
-    $('img').remove();
-    $('head').remove();
-    $('script').remove();
-    $('link').remove();
-    $('body').children().removeAttr('style');
-    $('body').children().removeAttr('class');
-    $('body').children().removeAttr('id');
-    $('body').children().removeAttr('name');
-    $('body').children().removeAttr('src');
-    $('body').children().removeAttr('href');
-    $('*').each(function() {      // iterate over all elements
-        this[0].attribs = {};     // remove all attributes
-    });
-    msg = $('body').html()+'';
+      helpers.cheerioHandler(requestBody, function (cheerioErr, message) {
+        var markedDown = '';
+        console.log('cheerio');
 
-    zlib.gzip(msg, function(err, result) {
-      var messageToSend = new Buffer(msg).toString('base64');
-      
-      if(err) {
-        throw err;
-      }
-      sendIt(messageToSend, resp, res);
+        if (cheerioErr) {
+          throw cheerioErr;
+        }
+        //Note that we are reassigning the parameter message sent to cheerioHandler
+        message = '<html><body>' + message + '</body></html>';
+        message = minify(message, {removeIgnored:true, collapseWhitespace: true, removeComments: true});
+        markedDown = md(message);
+
+        zlib.gzip(markedDown, function (zlibErr, zlibResult) {
+          var messageToSend = '';
+          console.log('zlib');
+          if (zlibErr) {
+            throw zlibErr;
+          }
+
+          messageToSend = new Buffer(zlibResult).toString('base64');
+
+          console.log("\n-------------MARKDOWN---------\n" + messageToSend);
+          //console.log("\n-------------HTML---------\n"+messageToSend);
+
+          helpers.sendIt(messageToSend, twillioResponse, expressSMSRes, function (sendItError, processedMessages) {
+            if (sendItError) {
+              throw sendItError;
+            }
+            console.log('send');
+            expressSMSRes.send(processedMessages.toString());
+          });
+        });
+      });
     });
-  });
+  }, 3000);
+} catch (err) {
+  console.log(err);
+  expressSMSRes.send("Invalid URL");
+}
 });
-
-
 module.exports = router;
