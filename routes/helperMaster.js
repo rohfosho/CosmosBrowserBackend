@@ -35,12 +35,7 @@ var HelperMaster = function () {
 
       console.log("Slices:\t" + slices);
       for (i = 0; i < slices; i++) {
-        if (i === slices - 1) {
-          //What exactly are these numbers? Related to the max length of an SMS?
-          messages.push(i + '%' + messageToSend.substring(i * 158, (i * 158 + 158)) + '%');
-        } else {
-          messages.push(i + '%' + messageToSend.substring(i * 159, (i * 159 + 159)));
-        }
+          messages.push(i + '%' + messageToSend.substring(i * 150, (i * 150 + 150)) + '*'+slices+'*');
       }
 
       for (j = 0; j < messages.length; j++) {
