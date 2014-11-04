@@ -26,6 +26,6 @@ We're working hard to get our first MVP release out as soon as possible. We'll b
 Contributer | Task
 --- | ---
 Stefan | Android
-Justice | Android
 Rohith | Backend
-Shreyas | Backend
+Chen | Design
+
