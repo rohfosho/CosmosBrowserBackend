@@ -8,7 +8,7 @@ CosmosBrowserBackend
 Cosmos Browser allows the user to connect to the internet through the use of SMS. No data or WiFi required.
 
 
-###Made with <3 at MHacks IV
+### Made with <3 at MHacks IV
 
 
 ### How it works
@@ -19,7 +19,7 @@ After a person inputs a url, our app texts our Twilio number which forwards the 
 
 We're working hard to get our first MVP release out as soon as possible. We'll be rapidly updating with new features.
 
-##Front End [Here](http://github.com/ColdSauce/CosmosBrowserAndroid)
+## Front End [Here](http://github.com/ColdSauce/CosmosBrowserAndroid)
 
 
 
@@ -27,5 +27,3 @@ Contributer | Task
 --- | ---
 Stefan | Android
 Rohith | Backend
-Chen | Design
-
