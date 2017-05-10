@@ -1,52 +1,58 @@
-/*jsling node: true */
+/*jslint node: true */
 
 var cheerio = require('cheerio');
 
 var HelperMaster = function () {
-  'use strict';
-  this.cheerioHandler = function (body, callback) {
-    try {
-      var $ = cheerio.load(body),
-        msg = '';
-      $('img').remove();
-      $('head').remove();
-      $('script').remove();
-      $('link').remove();
-      $('body').children().removeAttr('style');
-      $('body').children().removeAttr('id');
-      $('body').children().removeAttr('name');
-      $('body').children().removeAttr('src');
-      $('body').children().removeAttr('href');
-      $('body').children().removeAttr('*');
+        'use strict';
+        this.cheerioHandler = function (body, callback) {
+            try {
+                var $ = cheerio.load(body),
+                    strippedMessage = '';
+                $('img').remove();
+                $('head').remove();
+                $('script').remove();
+                $('link').remove();
+                $('body').children().removeAttr('style');
+                $('body').children().removeAttr('id');
+                $('body').children().removeAttr('name');
+                $('body').children().removeAttr('src');
+                $('body').children().removeAttr('href');
+                $('body').children().removeAttr('*');
 
-      msg = $('body').html();
-      callback(null, msg);
-    } catch (err) {
-      callback(err);
-    }
-  };
+                strippedMessage = $('body').html();
+                callback(null, strippedMessage);
+            } catch (err) {
+                callback(err);
+            }
+        };
 
-  this.sendIt = function (messageToSend, twillioResponse, sendItRes, callback) {
-    try {
-      var messages = [],
-        slices = Math.ceil(messageToSend.length / 160),
-        j = 0,
-        i = 0;
+        this.sendIt = function (messagesToSend, twillioResponse, sendItRes, callback) {
+            try {
+                var subMessage,
+                    subMessageStartIndex,
+                    subMessageEndIndex,
+                    textMessageLength = 150,
+                    prefix,
+                    streamLength = Math.ceil(messagesToSend.length / 160),
+                    streamLengthIndicator = '*' + streamLength + '*',
+                    i = 0;
 
-      console.log("Slices:\t" + slices);
-      for (i = 0; i < slices; i++) {
-          messages.push(i + '%' + messageToSend.substring(i * 150, (i * 150 + 150)) + '*'+slices+'*');
-      }
+                console.log("streamLength:\t" + streamLength);
+                for (i = 0; i < streamLength; i += 1) {               //Changed because JSLint has some beef with i++...
+                    subMessageStartIndex = i * textMessageLength;
+                    subMessageEndIndex = i * textMessageLength + textMessageLength;
+                    prefix = i + '%';
 
-      for (j = 0; j < messages.length; j++) {
-        twillioResponse.message(messages[j]);
-      }
+                    subMessage = prefix + messagesToSend.substring(subMessageStartIndex, subMessageEndIndex) + streamLengthIndicator;
+                    twillioResponse.message(subMessage);
+                }
 
-      callback(null, twillioResponse);
-    } catch (err) {
-      callback(err);
-    }
-  };
-};
+                callback(null, twillioResponse);
+                
+            } catch (err) {
+                callback(err);
+            }
+        };
+    };
 
 module.exports = new HelperMaster();
